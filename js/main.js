@@ -7,76 +7,64 @@
 1. Получаем данные для функции.
 */
 const lowerBound = 2;
-const upperBound = 3.9;
+const upperBound = 11;
 
 /*
-2. Проверяем, что число положительное или равно нулю.
+2. Проверяем, что число положительное или равно нулю:
 - Если число НЕ "больше или равно нулю", то выводим в консоль сообщение об этом.
 - Если число "больше или равно нулю", то ...
 */
 function isPositive(number) {
   if (number < 0) {
-    console.log(`Number ${number} is negative. Expected positive number or 0.`);
-    return false;
+    throw new Error(`Number ${number} is negative. Expected positive number or 0.`);
   }
   return true;
 }
 
 /*
-3. проверяем, что "до" больше, чем "от".
--- Если "до" меньше или равно "от", выводим в консоль сообщение об этом.
--- Если "до" больше, чем "от", то ...
+3. Проверяем, что "до" больше, чем "от":
+- Если "до" меньше или равно "от", выводим в консоль сообщение об этом.
+- Если "до" больше, чем "от", то ...
 */
 function isBigger(higherNumber, lowerNumber) {
   if (higherNumber <= lowerNumber) {
-    console.log(`Upper bound ${higherNumber} <= lower bound ${lowerNumber}. Expected upper bound > lower bound.`);
-    return false;
+    throw new Error(`Upper bound ${higherNumber} <= lower bound ${lowerNumber}. Expected upper bound > lower bound.`);
   }
   return true;
 }
 
 /*
-4. вычисляем целое число из диапазона между "от" и "до".
+4. Если проверки пройдены, то вычисляем целое число из диапазона между "от" и "до".
 */
 function getRandomInteger(lowerNumber, higherNumber) {
-  return Math.floor(Math.random() * (Math.floor(higherNumber) - Math.ceil(lowerNumber) + 1)) + Math.ceil(lowerNumber);
+  if (isPositive(lowerNumber) && isPositive(higherNumber) && isBigger(higherNumber, lowerNumber)) {
+    return Math.floor(Math.random() * (Math.floor(higherNumber) - Math.ceil(lowerNumber) + 1)) + Math.ceil(lowerNumber);
+  }
+  throw new Error('Function getRandomInteger - validation error ');
 }
 
-/*
-5. Если проверки пройдены, то высчитываем и выводим полученное число.
- */
-let randomInteger;
+getRandomInteger(lowerBound, upperBound);
 
-if (isPositive(lowerBound) && isPositive(upperBound) && isBigger(upperBound, lowerBound)) {
-  randomInteger = getRandomInteger(lowerBound, upperBound);
-}
-
-console.log(randomInteger);
 
 /*
-Функция для проверки максимальной длины строки. Будет использоваться для проверки длины введённого комментария,
-но должна быть универсальна. Пример использования функции:
+Функция проверяет максимальную длину строки. Должна быть универсальна.
+Пример использования функции: имя_функции(проверяемая_строка, максимальная_длина).
+Ожидаемый результат: true, если строка проходит по длине, и false — если не проходит.
 
-имя_функции(проверяемая_строка, максимальная_длина); // Результат: true, если строка проходит по длине,
-и false — если не проходит
-
-Этапы:
-1.
-2. Сравниваем длину проверяемой строки и указанную максимальную длину
-- Если длина проверяемой строки больше указанной максимальной длины, выводим в консоль сообщение об этом и
-возвращаем false.
+Этапы работы:
+1. Получаем данные для функции.
+2. Сравниваем длину проверяемой строки и указанную максимальную длину:
+- Если длина проверяемой строки больше указанной максимальной длины, выводим сообщение об ошибке.
 - Если длина проверяемой строки меньше или равна указанной максимальной длине, возвращаем true.
 */
 
 const checkingString = 'Hello!';
-const maxLength = 50;
+const maxLength = 14;
 
 function isSizeSuitable(variable, limit) {
   if (variable.length > limit) {
-    console.log(`Size is bigger than ${limit}`);
-    return false;
+    throw new Error(`Size is bigger than ${limit}`);
   }
-  return true;
 }
 
 isSizeSuitable(checkingString, maxLength);
