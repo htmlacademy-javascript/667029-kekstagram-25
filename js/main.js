@@ -82,9 +82,6 @@ isSizeSuitable(checkingString, maxLength);
 3. Создаем объект - комментарий.
 */
 
-const COMMENT_ID = [
-  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,
-];
 const COMMENT_MESSAGE = [
   'Всё отлично!',
   'В целом всё неплохо. Но не всё.',
@@ -104,11 +101,11 @@ const COMMENT_NAME = [
   'Вероника',
 ];
 
-function createComment () {
-  const randomCommentID = +(COMMENT_ID.splice(getRandomInteger(0, COMMENT_ID.length - 1), 1));
+const commentList = [];
 
+function createComment () {
   return {
-    id: randomCommentID,
+    id: commentList.length + 1,
     avatar: `img/avatar-${getRandomInteger(1, 6)}.svg`,
     message: COMMENT_MESSAGE[getRandomInteger(0, COMMENT_MESSAGE.length - 1)],
     name: COMMENT_NAME[getRandomInteger(0, COMMENT_NAME.length - 1)],
@@ -116,11 +113,19 @@ function createComment () {
 }
 
 /*
-функция создаёт массив из 0 .. 3 объектов - комментариев к фотографии.
+функция создаёт массив из 1 .. 3 объектов - комментариев к фотографии.
 */
 
-function commentList () {
-  return Array.from({length: getRandomInteger(0, 3)}, createComment);
+function createCommentList (count) {
+  const pictureCommentList = [];
+
+  for (let i = 0; i < count; i++) {
+    const result = createComment();
+    commentList.push(result);
+    pictureCommentList.push(result);
+  }
+
+  return pictureCommentList;
 }
 
 /*
@@ -138,9 +143,8 @@ function commentList () {
 3. Создаем объект - описание фотографии.
 */
 
-const PHOTO_ID = [
-  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
-];
+const PHOTO_COUNT = 25;
+const PHOTO_ID = Array.from({length: PHOTO_COUNT}, (v, k) => k);
 const PHOTO_DESCRIPTION = [
   'Прекрасное изображение, отражает действительность',
   'Повод призадуматься',
@@ -149,16 +153,15 @@ const PHOTO_DESCRIPTION = [
   'Вот так хочу!',
   'Веселье в разгаре',
 ];
+const photoList = [];
 
-function createPhoto () {
-  const randomPhotoID = +(PHOTO_ID.splice(getRandomInteger(0, PHOTO_ID.length - 1), 1));
-
+function createPhoto (index) {
   return {
-    id: randomPhotoID,
-    url: `photos/${randomPhotoID}.jpg`,
+    id: index + 1,
+    url: `photos/${index + 1}.jpg`,
     description: PHOTO_DESCRIPTION[getRandomInteger(0, PHOTO_DESCRIPTION.length - 1)],
     likes: getRandomInteger(15, 200),
-    comments: commentList,
+    comments: createCommentList(getRandomInteger(1, 3)),
   };
 }
 
@@ -166,8 +169,11 @@ function createPhoto () {
 функция создаёт массив из 25 объектов - описаний фотографии.
 */
 
-function photoList () {
-  return Array.from({length: 25}, createPhoto);
+function createPhotoList (count) {
+  for (let i = 0; i < count; i++) {
+    photoList.push(createPhoto(PHOTO_ID[i]));
+  }
+  return photoList;
 }
 
-photoList();
+createPhotoList(PHOTO_COUNT);
