@@ -33,16 +33,12 @@ function isBigger(higherNumber, lowerNumber) {
 - Если длина проверяемой строки больше указанной максимальной длины, выводим сообщение об ошибке.
 - Если длина проверяемой строки меньше или равна указанной максимальной длине, возвращаем true.
 */
-
-const checkingString = 'Hello!';
-const maxLength = 14;
-
 function isSizeSuitable(variable, limit) {
   if (variable.length > limit) {
     throw new Error(`Size is bigger than ${limit}`);
   }
 }
 
-isSizeSuitable(checkingString, maxLength);
+isSizeSuitable('Hello!', 14); /* вызов с тестовыми данными оставлен до применения данной функции в коде, а то линтер ругается на неиспользованную функцию */
 
 export {isPositive, isBigger};

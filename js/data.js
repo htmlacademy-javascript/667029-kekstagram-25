@@ -1,4 +1,3 @@
-import {PHOTO_COUNT} from './setup.js';
 import {getRandomInteger} from './utilitary.js';
 
 /*
@@ -72,7 +71,6 @@ function createCommentList (count) {
 2. Из массива ID функций извлекаем ID для использования в создаваемом объекте - описании фотографии.
 3. Создаем объект - описание фотографии.
 */
-const PHOTO_ID = Array.from({length: PHOTO_COUNT}, (v, k) => k);
 const PHOTO_DESCRIPTION = [
   'Прекрасное изображение, отражает действительность',
   'Повод призадуматься',
@@ -97,9 +95,8 @@ function createPhoto (index) {
 функция создаёт массив из указанного в настройках количества объектов - описаний фотографии.
 */
 function createPhotoList (count) {
-
   for (let i = 0; i < count; i++) {
-    photoList.push(createPhoto(PHOTO_ID[i]));
+    photoList.push(createPhoto(i));
   }
   return photoList;
 }

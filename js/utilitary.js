@@ -1,5 +1,4 @@
-import {isPositive} from './check.js';
-import {isBigger} from './check.js';
+import {isPositive, isBigger} from './check.js';
 
 /* Функция возвращает случайное целое число из переданного диапазона включительно.
 Ожидаемый результат: случайное целое число из диапазона "от...до"
