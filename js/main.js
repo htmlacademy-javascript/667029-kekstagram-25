@@ -1,1 +1,1 @@
-import './templates.js';
+import './preview.js';
