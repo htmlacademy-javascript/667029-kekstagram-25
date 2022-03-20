@@ -1403,3 +1403,10 @@ main {
 .hidden {
   display: none;
 }
+
+/* Библиотека Pristine */
+
+.img-upload__error-text {
+  color: #ff4e4e;
+  text-transform: none;
+}
