@@ -1,11 +1,13 @@
+const ESCAPE_CODE = 27;
 const imageUploadForm = document.querySelector('.img-upload__form');
-const uploadFileControl = document.querySelector('.img-upload__input');
-const cancelUploadButton = document.querySelector('.img-upload__cancel');
-const scaleControlInput = document.querySelector('.scale__control--value');
-const effectLevelInput = document.querySelector('.effect-level__value');
-const effectNoneInput = document.querySelector('#effect-none');
-const hashtagsInput = document.querySelector('.text__hashtags');
-const commentInput = document.querySelector('.text__description');
+const imageUploadFormOverlay = imageUploadForm.querySelector('.img-upload__overlay');
+const uploadFileControl = imageUploadForm.querySelector('.img-upload__input');
+const cancelUploadButton = imageUploadForm.querySelector('.img-upload__cancel');
+const scaleControlInput = imageUploadForm.querySelector('.scale__control--value');
+const effectLevelInput = imageUploadForm.querySelector('.effect-level__value');
+const effectNoneInput = imageUploadForm.querySelector('#effect-none');
+const hashtagsInput = imageUploadForm.querySelector('.text__hashtags');
+const commentInput = imageUploadForm.querySelector('.text__description');
 
 /*
 Функция отрисовки окна загрузки и редактирования изображения.
@@ -24,7 +26,7 @@ const commentInput = document.querySelector('.text__description');
 - событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc.
 */
 function renderImageUploadForm () {
-  document.querySelector('.img-upload__overlay').classList.remove('hidden');
+  imageUploadFormOverlay.classList.remove('hidden');
   document.querySelector('body').classList.add('modal-open');
 
   cancelUploadButton.addEventListener('click', closeImageUploadForm);
@@ -54,7 +56,7 @@ function renderImageUploadForm () {
 3. Сбрасываем значения полей ввода в форме.
 */
 function closeImageUploadForm () {
-  document.querySelector('.img-upload__overlay').classList.add('hidden');
+  imageUploadFormOverlay.classList.add('hidden');
   document.querySelector('body').classList.remove('modal-open');
 
   cancelUploadButton.removeEventListener('click', closeImageUploadForm);
@@ -79,7 +81,7 @@ function closeImageUploadForm () {
 Если нажат Esc, закрывается окно загрузки и редактирования изображения.
 */
 function closeByKeydown (evt) {
-  if (evt.keyCode === 27) {
+  if (evt.keyCode === ESCAPE_CODE) {
     closeImageUploadForm();
   }
 }
@@ -131,7 +133,7 @@ pristine.addValidator(document.querySelector('#text__hashtags'), validateHashtag
 5. Проверяем массив хештегов:
 - число хештегов - не более 5;
 - написание хештега соответствует маске ввода;
-- один и тот же хэш-тег не может быть использован дважды.
+- отсутствуют дубли хештегов.
 В случае всех положительных проверок, завершаем валидацию с true.
 Если хотя бы одна проверка отрицательная, завершаем валидацию с false.
 */
@@ -142,21 +144,22 @@ function validateHashtags () {
 
   if (hashtagArray === '') {
     return true;
-  } else {
-    hashtagArray = hashtagArray.split(' ');
-    if (validateArrayLength(hashtagArray) && validateRegExp(hashtagArray) && hasNoDuplicateItem(hashtagArray)) {
-      return true;
-    } else {
-      return false;
-    }
   }
+
+  hashtagArray = hashtagArray.split(' ');
+
+  const isArrayLengthValid = validateArrayLength(hashtagArray);
+  const isRegExpValid = validateRegExp(hashtagArray);
+  const hasNoDuplicates = hasNoDuplicateItem(hashtagArray);
+  const validateResult = isArrayLengthValid && isRegExpValid && hasNoDuplicates;
+  return validateResult;
 }
 
 /*
 Функция генерации ошибки валидации. Общая для всех пунктов проверки.
 */
 function getHashtagsErrorMessage () {
-  return 'Хештеги не валидные';
+  return 'Хештеги начинаются с решетки. Могут содержать только буквы и числа. Хештегов не более 5. Регистр не важен. Повторять хештеги нельзя.';
 }
 
 /*
@@ -188,56 +191,58 @@ function improveText (text) {
 }
 
 /*
-Функция проверки количества хештегов.
+Функция проверки количества хештегов в массиве.
 Если хештегов более 5, проверка не пройдена.
 */
 function validateArrayLength (array) {
-  if (array.length <= 5) {
-    return true;
-  } else {
-    return false;
-  }
+  return array.length <= 5;
 }
 
 /*
-Функция проверки хештегов на соответствие маске ввода:
-- хештег начинается с символа # (решётка);
-- строка после решётки должна состоять из букв и чисел и не может содержать пробелы, спецсимволы (#, @, $ и т. п.), символы пунктуации (тире, дефис, запятая и т. п.), эмодзи и т. д.;
-- хештег не может состоять только из одной решётки;
-- максимальная длина одного хэш-тега 20 символов, включая решётку.
-Если хештег не соответствует маске ввода, проверка не пройдена.
+Функция проверки соответствия массива хештегов маске ввода.
+Если хотя бы один хештег из массива не соответствует маске ввода, проверка не пройдена.
 */
 function validateRegExp (array) {
-  let count = 0;
-  const regExp = /^#[A-Za-zА-Яа-яЁё0-9]{1,19}$/;
-  for (let i = 0; i < array.length; i++) {
-    if (!regExp.test(array[i])) {
-      count++;
-    }
-  }
-  if (count > 0) {
-    return false;
-  } else {
-    return true;
-  }
+  return array.every(isMatchRegExp);
 }
 
 /*
-Функция проверки повторяющихся хештегов.
+Функция проверки строки на соответствие условиям маски ввода:
+- начинается с символа # (решётка);
+- строка после решётки должна состоять из букв и чисел и не может содержать пробелы, спецсимволы (#, @, $ и т. п.), символы пунктуации (тире, дефис, запятая и т. п.), эмодзи и т. д.;
+- не может состоять только из одной решётки;
+- максимальная длина 20 символов, включая решётку.
+*/
+function isMatchRegExp (arrayItem) {
+  const regExp = /^#[A-Za-zА-Яа-яЁё0-9]{1,19}$/;
+  return regExp.test(arrayItem);
+}
+
+/*
+Функция проверки дубликатов хештегов в массиве.
 Если обнаружен дубликат хештега, проверка не пройдена.
 */
 function hasNoDuplicateItem (array) {
-  let count = 0;
-  for (let i = 0; i < array.length; i++) {
-    for (let j = i + 1; j < array.length; j++) {
-      if (array[i] === array [j]) {
-        count++;
-      }
+  return !(array.some(hasDuplicate));
+}
+
+/*
+Функция проверки повторяющихся элементов в массиве.
+
+Этапы работы:
+1. Копируем массив в переменную, сортируем массив.
+2. Сравниваем соседние элементы в массиве:
+- если элементы одинаковые, завершаем проверку с true;
+- в обратном случае, завершаем проверку с false.
+*/
+function hasDuplicate (array) {
+  const workArray = array.slice().sort();
+
+  for (let i = 0; i < workArray.length; i++) {
+    if (workArray[i] === workArray[i + 1]) {
+      return true;
     }
   }
-  if (count > 0) {
-    return false;
-  } else {
-    return true;
-  }
+
+  return false;
 }

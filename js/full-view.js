@@ -1,3 +1,8 @@
+const ESCAPE_CODE = 27;
+const COMMENT_COUNT = 5;
+const moreCommentsButton = document.querySelector('.social__comments-loader');
+const commentsCountElement = document.querySelector('.social__comment-count');
+
 /*
 Функция отрисовывает массив объектов "Комментарии к фотографии".
 Шаблон разметки комментария:
@@ -12,14 +17,36 @@
 
 Этапы работы:
 1. Обнуляем содержимое контейнера для отрисовки комментариев. **иначе он добавляет комментарии к ранее отрисованным
-2. Создаем фрагмент.
-3. Для каждого комментария создаем элемент согласно шаблону разметки.
-4. Добавляем элемент во фрагмент.
-5. Добавляем фрагмент в контейнер для отрисовки комментариев.
+2.
 */
 function renderCommentList (list, container) {
   container.innerHTML = '';
-  const commentFragment = document.createDocumentFragment();
+
+  const commentsList = list.slice();
+  const commentsPack = commentsList.splice(0, COMMENT_COUNT);
+  let commentsCount = commentsPack.length;
+
+  container.appendChild(addToFragment(commentsPack));
+
+  moreCommentsButton.addEventListener('click', () => {
+    const addCommentsPack = commentsList.splice(0, COMMENT_COUNT);
+    const addCommentsCount = addCommentsPack.length;
+    container.appendChild(addToFragment(addCommentsPack));
+    commentsCount += addCommentsCount;
+    commentsCountElement.innerHTML = `${commentsCount} из <span class="comments-count">${list.length}</span> комментариев`;
+  });
+
+  commentsCountElement.innerHTML = `${commentsCount} из <span class="comments-count">${list.length}</span> комментариев`;
+}
+
+/*
+Функция добавления части массива комментариев во фрагмент.
+
+Этапы работы:
+*/
+
+function addToFragment (list) {
+  const addCommentFragment = document.createDocumentFragment();
 
   list.forEach(({avatar, name, message}) => {
     const newCommentElement = document.createElement('li');
@@ -38,9 +65,10 @@ function renderCommentList (list, container) {
     commentElementText.textContent = message;
     newCommentElement.appendChild(commentElementText);
 
-    commentFragment.appendChild(newCommentElement);
+    addCommentFragment.appendChild(newCommentElement);
   });
-  container.appendChild(commentFragment);
+
+  return addCommentFragment;
 }
 
 /*
@@ -59,10 +87,9 @@ function renderCommentList (list, container) {
 - количество комментариев comments подставляем как текстовое содержание элемента .comments-count;
 - описание фотографии description вставляем строкой в блок .social__caption.
 4. Получаем контейнер для отрисовки списка комментариев (блок .social__comments). Отрисовываем комментарии к фотографии.
-5. Прячем блоки счётчика комментариев .social__comment-count и загрузки новых комментариев .comments-loader (добавляем им класс hidden).
-6. Добавляем тегу <body> класс modal-open, чтобы контейнер с фотографиями позади не прокручивался при скролле. При закрытии окна не забудьте удалить этот класс.
-7. Добавляем обработчик событий для закрытия окна (условие срабатывания - клик по иконке закрытия окна).
-8. Добавляем обработчик событий для закрытия окна (условие срабатывания - нажатие клавиши Esc).
+5. Добавляем тегу <body> класс modal-open, чтобы контейнер с фотографиями позади не прокручивался при скролле. При закрытии окна не забудьте удалить этот класс.
+6. Добавляем обработчик событий для закрытия окна (условие срабатывания - клик по иконке закрытия окна).
+7. Добавляем обработчик событий для закрытия окна (условие срабатывания - нажатие клавиши Esc).
 */
 const fullPhotoContainer = document.querySelector('.big-picture');
 
@@ -76,8 +103,6 @@ function renderFullView ({url, likes, comments, description}, container) {
   renderCommentList(comments, commentContainer);
 
   container.querySelector('.social__caption').textContent = description;
-  container.querySelector('.social__comment-count').classList.add('hidden');
-  container.querySelector('.comments-loader').classList.add('hidden');
   document.querySelector('body').classList.add('modal-open');
 
   const closeFullViewButton = container.querySelector('#picture-cancel');
@@ -94,13 +119,10 @@ function renderFullView ({url, likes, comments, description}, container) {
 
 Этапы работы:
 1. Удаляем у тега <body> класса modal-open;
-2. Отображаем блоки счётчика комментариев .social__comment-count и загрузки новых комментариев .comments-loader (убираем у них класс hidden);
-3. Добавляем класс hidden элементу .big-picture.
+2. Добавляем класс hidden элементу .big-picture.
 */
 function closeFullView (container) {
   document.querySelector('body').classList.remove('modal-open');
-  container.querySelector('.social__comment-count').classList.remove('hidden');
-  container.querySelector('.comments-loader').classList.remove('hidden');
   container.classList.add('hidden');
   document.removeEventListener('keydown', closeByKeydown);
 }
@@ -110,7 +132,7 @@ function closeFullView (container) {
 Ожидает нажатие клавиши Esc. Вызывает функцию закрытия окна с полноразмерным изображением одного из объектов "Описание фотографии".
 */
 function closeByKeydown (evt) {
-  if (evt.keyCode === 27) {
+  if (evt.keyCode === ESCAPE_CODE) {
     closeFullView(fullPhotoContainer);
   }
 }

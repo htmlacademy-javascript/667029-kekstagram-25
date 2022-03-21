@@ -87,7 +87,7 @@ function createPhoto (index) {
     url: `photos/${index + 1}.jpg`,
     description: PHOTO_DESCRIPTION[getRandomInteger(0, PHOTO_DESCRIPTION.length - 1)],
     likes: getRandomInteger(15, 200),
-    comments: createCommentList(getRandomInteger(1, 3)),
+    comments: createCommentList(getRandomInteger(1, 12)),
   };
 }
 
