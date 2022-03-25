@@ -1,13 +1,22 @@
 const ESCAPE_CODE = 27;
+const SCALE_STEP = 25;
+const MIN_SCALE = 25;
+const MAX_SCALE = 100;
 const imageUploadForm = document.querySelector('.img-upload__form');
 const imageUploadFormOverlay = imageUploadForm.querySelector('.img-upload__overlay');
+const imageFullPreview = imageUploadForm.querySelector('.img-upload__preview img');
 const uploadFileControl = imageUploadForm.querySelector('.img-upload__input');
 const cancelUploadButton = imageUploadForm.querySelector('.img-upload__cancel');
 const scaleControlInput = imageUploadForm.querySelector('.scale__control--value');
+const decreaseScaleButton = imageUploadForm.querySelector('.scale__control--smaller');
+const increaseScaleButton = imageUploadForm.querySelector('.scale__control--bigger');
 const effectLevelInput = imageUploadForm.querySelector('.effect-level__value');
 const effectNoneInput = imageUploadForm.querySelector('#effect-none');
 const hashtagsInput = imageUploadForm.querySelector('.text__hashtags');
 const commentInput = imageUploadForm.querySelector('.text__description');
+const slider = imageUploadForm.querySelector('.effect-level__slider');
+const sliderValueInput = imageUploadForm.querySelector('.effect-level__value');
+const effectsList = imageUploadForm.querySelector('.img-upload__effects');
 
 /*
 Функция отрисовки окна загрузки и редактирования изображения.
@@ -23,7 +32,11 @@ const commentInput = imageUploadForm.querySelector('.text__description');
 - событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
 - событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
 - событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc.
+- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
+- событие клика по кнопке "-" - уменьшение размера изображения;
+- событие клика по кнопке "+" - увеличение размера изображения;
+- событие смены выбранного эффекта для изображения - обновление эффекта на изображении, обновление настроек слайдера для эффекта.
+3. Добавляем слайдер с начальными настройками в окно загрузки и редактирования изображения.
 */
 function renderImageUploadForm () {
   imageUploadFormOverlay.classList.remove('hidden');
@@ -36,6 +49,9 @@ function renderImageUploadForm () {
   commentInput.addEventListener('focusout', restoreCloseByKeydown);
   hashtagsInput.addEventListener('focusin', cancelCloseByKeydown);
   hashtagsInput.addEventListener('focusout', restoreCloseByKeydown);
+  decreaseScaleButton.addEventListener('click', decreaseScale);
+  increaseScaleButton.addEventListener('click', increaseScale);
+  effectsList.addEventListener('change', updateEffect);
 }
 
 /*
@@ -52,8 +68,11 @@ function renderImageUploadForm () {
 - событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
 - событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
 - событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc.
-3. Сбрасываем значения полей ввода в форме.
+- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
+- событие клика по кнопке "-" - уменьшение размера изображения;
+- событие клика по кнопке "+" - увеличение размера изображения;
+- событие смены выбранного эффекта для изображения - обновление эффекта на изображении, обновление настроек слайдера для эффекта.
+3. Сбрасываем значения полей ввода в форме. Убираем эффекты с изображения.
 */
 function closeImageUploadForm () {
   imageUploadFormOverlay.classList.add('hidden');
@@ -66,6 +85,9 @@ function closeImageUploadForm () {
   commentInput.removeEventListener('focusout', restoreCloseByKeydown);
   hashtagsInput.removeEventListener('focusin', cancelCloseByKeydown);
   hashtagsInput.removeEventListener('focusout', restoreCloseByKeydown);
+  decreaseScaleButton.removeEventListener('click', decreaseScale);
+  increaseScaleButton.removeEventListener('click', increaseScale);
+  effectsList.removeEventListener('change', updateEffect);
 
   uploadFileControl.value = '';
   scaleControlInput.value = '100%';
@@ -73,6 +95,10 @@ function closeImageUploadForm () {
   effectNoneInput.checked = true;
   hashtagsInput.value = '';
   commentInput.value = '';
+  imageFullPreview.className = '';
+  imageFullPreview.style.filter = 'none';
+  imageFullPreview.style.transform = 'scale(1)';
+  slider.noUiSlider.destroy();
 }
 
 /*
@@ -236,7 +262,8 @@ function hasNoDuplicateItem (array) {
 - в обратном случае, завершаем проверку с false.
 */
 function hasDuplicate (array) {
-  const workArray = array.slice().sort();
+  let workArray = array.slice();
+  workArray = workArray.sort();
 
   for (let i = 0; i < workArray.length; i++) {
     if (workArray[i] === workArray[i + 1]) {
@@ -245,4 +272,250 @@ function hasDuplicate (array) {
   }
 
   return false;
+}
+
+/*
+Функция уменьшения размера.
+
+Этапы работы:
+1. Вычисляем текущее значение размера изображения в поле ввода.
+2. Сравниваем значение с минимальным:
+- если значение минимальное, то ничего не происходит;
+- если значение больше минимального, то ...
+3. Уменьшаем значение размера на величину шага.
+4. Обновляем значение размера изображения в поле ввода.
+5. Изменяем непосредственно размер изображения согласно новому значению.
+*/
+function decreaseScale () {
+  let scale = parseInt(scaleControlInput.value, 10);
+  if (scale > MIN_SCALE) {
+    scale -= SCALE_STEP;
+    scaleControlInput.value = `${scale}%`;
+    changeImageScale (scale);
+  }
+}
+
+/*
+Функция увеличения размера.
+
+Этапы работы:
+1. Вычисляем текущее значение размера изображения в поле ввода.
+2. Сравниваем значение с максимальным:
+- если значение максимальное, то ничего не происходит;
+- если значение меньше максимального, то ...
+3. Увеличиваем значение размера на величину шага.
+4. Обновляем значение размера изображения в поле ввода.
+5. Изменяем непосредственно размер изображения согласно новому значению.
+*/
+function increaseScale () {
+  let scale = parseInt(scaleControlInput.value, 10);
+  if (scale < MAX_SCALE) {
+    scale += SCALE_STEP;
+    scaleControlInput.value = `${scale}%`;
+    changeImageScale (scale);
+  }
+}
+
+/*
+Функция изменения размера изображения.
+Добавляет стиль CSS, который с помощью трансформации scale задаёт масштаб.
+*/
+function changeImageScale (imageScale) {
+  imageFullPreview.style.transform = `scale(${imageScale/100})`;
+}
+
+/*
+Функция создания слайдера для эффектов, накладываемых на изображение.
+
+Этапы работы:
+1. Создаем слайдер с начальными настройками.
+2. Навешиваем обработчики событий:
+- событие изменения значения слайдера - изменение применяемых для изображения стилей (в зависимости от выбранного эффекта).
+*/
+function createEffectSlider () {
+  noUiSlider.create(slider, {
+    range: {
+      min: 0,
+      max: 100,
+    },
+    start: 100,
+    step: 1,
+    connect: 'lower',
+  });
+
+  slider.noUiSlider.on('update', () => {
+    sliderValueInput.value = slider.noUiSlider.get();
+    switch (imageFullPreview.className) {
+      case 'effects__preview--none':
+        imageFullPreview.style.filter = 'none';
+        return true;
+      case 'effects__preview--chrome':
+        imageFullPreview.style.filter = `grayscale(${sliderValueInput.value})`;
+        return true;
+      case 'effects__preview--sepia':
+        imageFullPreview.style.filter = `sepia(${sliderValueInput.value})`;
+        return true;
+      case 'effects__preview--marvin':
+        imageFullPreview.style.filter = `invert(${sliderValueInput.value}%)`;
+        return true;
+      case 'effects__preview--phobos':
+        imageFullPreview.style.filter = `blur(${sliderValueInput.value}px)`;
+        return true;
+      case 'effects__preview--heat':
+        imageFullPreview.style.filter = `brightness(${sliderValueInput.value})`;
+        return true;
+    }
+  });
+}
+
+/*
+Функция изменения эффекта на изображении.
+
+Этапы работы:
+1. Если слайдер для изменения эффекта не создан, создаем его.
+2. Если был нажат один из эффектов, то:
+2.1. Удаляем классы для загружаемого изображения.
+2.2. Добавляем изображению класс, соответствующий эффекту.
+2.3. В зависимости от выбранного эффекта, обновляем настройки слайдера.
+- для всех эффектов, кроме "Оригинал", указываем:
+-- начальное значение шкалы;
+-- конечное значение шкалы;
+-- шаг изменения значения;
+-- стартовое положение слайдера;
+-- формат вывода значения слайдера в скрытое поле.
+- для эффекта "Оригинал":
+-- сбрасываем стили для изображения;
+-- удаляем слайдер.
+*/
+function updateEffect (evt) {
+  if (!slider.noUiSlider) {
+    createEffectSlider();
+  }
+
+  if (evt.target.matches('input[type="radio"]')) {
+    imageFullPreview.className = '';
+    imageFullPreview.classList.add(`effects__preview--${evt.target.value}`);
+
+    switch (evt.target.value) {
+      case 'none':
+        imageFullPreview.style.filter = 'none';
+        slider.noUiSlider.destroy();
+        return true;
+
+      case 'chrome':
+        slider.noUiSlider.updateOptions({
+          range: {
+            min: 0,
+            max: 1,
+          },
+          start: 1,
+          step: 0.1,
+          format: {
+            to: function (value) {
+              if (Number.isInteger(value)) {
+                return value.toFixed(0);
+              }
+              return value.toFixed(1);
+            },
+            from: function (value) {
+              return parseFloat(value);
+            },
+          },
+        });
+
+        return true;
+
+      case 'sepia':
+        slider.noUiSlider.updateOptions({
+          range: {
+            min: 0,
+            max: 1,
+          },
+          start: 1,
+          step: 0.1,
+          format: {
+            to: function (value) {
+              if (Number.isInteger(value)) {
+                return value.toFixed(0);
+              }
+              return value.toFixed(1);
+            },
+            from: function (value) {
+              return parseFloat(value);
+            },
+          },
+        });
+
+        return true;
+
+      case 'marvin':
+        slider.noUiSlider.updateOptions({
+          range: {
+            min: 0,
+            max: 100,
+          },
+          start: 100,
+          step: 1,
+          format: {
+            to: function (value) {
+              if (Number.isInteger(value)) {
+                return value.toFixed(0);
+              }
+              return value.toFixed(0);
+            },
+            from: function (value) {
+              return parseFloat(value);
+            },
+          },
+        });
+
+        return true;
+
+      case 'phobos':
+        slider.noUiSlider.updateOptions({
+          range: {
+            min: 0,
+            max: 3,
+          },
+          start: 3,
+          step: 0.1,
+          format: {
+            to: function (value) {
+              if (Number.isInteger(value)) {
+                return value.toFixed(0);
+              }
+              return value.toFixed(1);
+            },
+            from: function (value) {
+              return parseFloat(value);
+            },
+          },
+        });
+
+        return true;
+
+      case 'heat':
+        slider.noUiSlider.updateOptions({
+          range: {
+            min: 1,
+            max: 3,
+          },
+          start: 3,
+          step: 0.1,
+          format: {
+            to: function (value) {
+              if (Number.isInteger(value)) {
+                return value.toFixed(0);
+              }
+              return value.toFixed(1);
+            },
+            from: function (value) {
+              return parseFloat(value);
+            },
+          },
+        });
+
+        return true;
+    }
+  }
 }
