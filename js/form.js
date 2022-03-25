@@ -1,9 +1,15 @@
 const ESCAPE_CODE = 27;
+const SCALE_STEP = 25;
+const MIN_SCALE = 25;
+const MAX_SCALE = 100;
 const imageUploadForm = document.querySelector('.img-upload__form');
 const imageUploadFormOverlay = imageUploadForm.querySelector('.img-upload__overlay');
+const imageFullPreview = imageUploadForm.querySelector('.img-upload__preview img');
 const uploadFileControl = imageUploadForm.querySelector('.img-upload__input');
 const cancelUploadButton = imageUploadForm.querySelector('.img-upload__cancel');
 const scaleControlInput = imageUploadForm.querySelector('.scale__control--value');
+const decreaseScaleButton = imageUploadForm.querySelector('.scale__control--smaller');
+const increaseScaleButton = imageUploadForm.querySelector('.scale__control--bigger');
 const effectLevelInput = imageUploadForm.querySelector('.effect-level__value');
 const effectNoneInput = imageUploadForm.querySelector('#effect-none');
 const hashtagsInput = imageUploadForm.querySelector('.text__hashtags');
@@ -23,7 +29,9 @@ const commentInput = imageUploadForm.querySelector('.text__description');
 - событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
 - событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
 - событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc.
+- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
+- событие клика по кнопке "-" - уменьшение размера изображения;
+- событие клика по кнопке "+" - увеличение размера изображения.
 */
 function renderImageUploadForm () {
   imageUploadFormOverlay.classList.remove('hidden');
@@ -36,6 +44,8 @@ function renderImageUploadForm () {
   commentInput.addEventListener('focusout', restoreCloseByKeydown);
   hashtagsInput.addEventListener('focusin', cancelCloseByKeydown);
   hashtagsInput.addEventListener('focusout', restoreCloseByKeydown);
+  decreaseScaleButton.addEventListener('click', decreaseScale);
+  increaseScaleButton.addEventListener('click', increaseScale);
 }
 
 /*
@@ -52,7 +62,9 @@ function renderImageUploadForm () {
 - событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
 - событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
 - событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc.
+- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
+- событие клика по кнопке "-" - уменьшение размера изображения;
+- событие клика по кнопке "+" - увеличение размера изображения.
 3. Сбрасываем значения полей ввода в форме.
 */
 function closeImageUploadForm () {
@@ -66,6 +78,8 @@ function closeImageUploadForm () {
   commentInput.removeEventListener('focusout', restoreCloseByKeydown);
   hashtagsInput.removeEventListener('focusin', cancelCloseByKeydown);
   hashtagsInput.removeEventListener('focusout', restoreCloseByKeydown);
+  decreaseScaleButton.removeEventListener('click', decreaseScale);
+  increaseScaleButton.removeEventListener('click', increaseScale);
 
   uploadFileControl.value = '';
   scaleControlInput.value = '100%';
@@ -245,4 +259,54 @@ function hasDuplicate (array) {
   }
 
   return false;
+}
+
+/*
+Функция уменьшения размера.
+
+Этапы работы:
+1. Вычисляем текущее значение размера изображения в поле ввода.
+2. Сравниваем значение с минимальным:
+- если значение минимальное, то ничего не происходит;
+- если значение больше минимального, то ...
+3. Уменьшаем значение размера на величину шага.
+4. Обновляем значение размера изображения в поле ввода.
+5. Изменяем непосредственно размер изображения согласно новому значению.
+*/
+function decreaseScale () {
+  let scale = parseInt(scaleControlInput.value, 10);
+  if (scale > MIN_SCALE) {
+    scale -= SCALE_STEP;
+    scaleControlInput.value = `${scale}%`;
+    changeImageScale (scale);
+  }
+}
+
+/*
+Функция увеличения размера.
+
+Этапы работы:
+1. Вычисляем текущее значение размера изображения в поле ввода.
+2. Сравниваем значение с максимальным:
+- если значение максимальное, то ничего не происходит;
+- если значение меньше максимального, то ...
+3. Увеличиваем значение размера на величину шага.
+4. Обновляем значение размера изображения в поле ввода.
+5. Изменяем непосредственно размер изображения согласно новому значению.
+*/
+function increaseScale () {
+  let scale = parseInt(scaleControlInput.value, 10);
+  if (scale < MAX_SCALE) {
+    scale += SCALE_STEP;
+    scaleControlInput.value = `${scale}%`;
+    changeImageScale (scale);
+  }
+}
+
+/*
+Функция изменения размера изображения.
+Добавляет стиль CSS, который с помощью трансформации scale задаёт масштаб.
+*/
+function changeImageScale (imageScale) {
+  imageFullPreview.style.transform = `scale(${imageScale/100})`;
 }
