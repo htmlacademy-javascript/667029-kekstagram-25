@@ -1,7 +1,10 @@
-const ESCAPE_CODE = 27;
+import {showUploadMessage, ESCAPE_CODE} from './utilitary.js';
+import {sendData} from './api.js';
+
 const SCALE_STEP = 25;
 const MIN_SCALE = 25;
 const MAX_SCALE = 100;
+
 const imageUploadForm = document.querySelector('.img-upload__form');
 const imageUploadFormOverlay = imageUploadForm.querySelector('.img-upload__overlay');
 const imageFullPreview = imageUploadForm.querySelector('.img-upload__preview img');
@@ -17,114 +20,10 @@ const commentInput = imageUploadForm.querySelector('.text__description');
 const slider = imageUploadForm.querySelector('.effect-level__slider');
 const sliderValueInput = imageUploadForm.querySelector('.effect-level__value');
 const effectsList = imageUploadForm.querySelector('.img-upload__effects');
-
-/*
-Функция отрисовки окна загрузки и редактирования изображения.
-
-Этапы работы:
-1. Добавляем/удаляем классы у элементов:
-- удаляем класс hidden у окна загрузки и редактирования изображения;
-- добавляем тегу <body> класс modal-open.
-2. Навешиваем обработчики событий:
-- событие клика по кнопке-крестику - закрытие окна загрузки и редактирования изображения;
-- событие нажатия кнопки Ecs - закрытие окна загрузки и редактирования изображения;
-- событие отправки данных формы загрузки и редактирования изображения - валидация полей формы;
-- событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
-- событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
-- событие клика по кнопке "-" - уменьшение размера изображения;
-- событие клика по кнопке "+" - увеличение размера изображения;
-- событие смены выбранного эффекта для изображения - обновление эффекта на изображении, обновление настроек слайдера для эффекта.
-3. Добавляем слайдер с начальными настройками в окно загрузки и редактирования изображения.
-*/
-function renderImageUploadForm () {
-  imageUploadFormOverlay.classList.remove('hidden');
-  document.querySelector('body').classList.add('modal-open');
-
-  cancelUploadButton.addEventListener('click', closeImageUploadForm);
-  document.addEventListener('keydown', closeByKeydown);
-  imageUploadForm.addEventListener('submit', validateImageUploadForm);
-  commentInput.addEventListener('focusin', cancelCloseByKeydown);
-  commentInput.addEventListener('focusout', restoreCloseByKeydown);
-  hashtagsInput.addEventListener('focusin', cancelCloseByKeydown);
-  hashtagsInput.addEventListener('focusout', restoreCloseByKeydown);
-  decreaseScaleButton.addEventListener('click', decreaseScale);
-  increaseScaleButton.addEventListener('click', increaseScale);
-  effectsList.addEventListener('change', updateEffect);
-}
-
-/*
-Функция закрытия окна загрузки и редактирования изображения.
-
-Этапы работы:
-1. Добавляем/удаляем классы у элементов:
-- добавляем класс hidden окну загрузки и редактирования изображения;
-- удаляем у тега <body> класс modal-open.
-2. Удаляем обработчики событий:
-- событие клика по кнопке-крестику - закрытие окна загрузки и редактирования изображения;
-- событие нажатия кнопки Ecs - закрытие окна загрузки и редактирования изображения;
-- событие отправки данных формы загрузки и редактирования изображения - валидация полей формы;
-- событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
-- событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
-- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
-- событие клика по кнопке "-" - уменьшение размера изображения;
-- событие клика по кнопке "+" - увеличение размера изображения;
-- событие смены выбранного эффекта для изображения - обновление эффекта на изображении, обновление настроек слайдера для эффекта.
-3. Сбрасываем значения полей ввода в форме. Убираем эффекты с изображения.
-*/
-function closeImageUploadForm () {
-  imageUploadFormOverlay.classList.add('hidden');
-  document.querySelector('body').classList.remove('modal-open');
-
-  cancelUploadButton.removeEventListener('click', closeImageUploadForm);
-  document.removeEventListener('keydown', closeByKeydown);
-  imageUploadForm.removeEventListener('submit', validateImageUploadForm);
-  commentInput.removeEventListener('focusin', cancelCloseByKeydown);
-  commentInput.removeEventListener('focusout', restoreCloseByKeydown);
-  hashtagsInput.removeEventListener('focusin', cancelCloseByKeydown);
-  hashtagsInput.removeEventListener('focusout', restoreCloseByKeydown);
-  decreaseScaleButton.removeEventListener('click', decreaseScale);
-  increaseScaleButton.removeEventListener('click', increaseScale);
-  effectsList.removeEventListener('change', updateEffect);
-
-  uploadFileControl.value = '';
-  scaleControlInput.value = '100%';
-  effectLevelInput.value = '';
-  effectNoneInput.checked = true;
-  hashtagsInput.value = '';
-  commentInput.value = '';
-  imageFullPreview.className = '';
-  imageFullPreview.style.filter = 'none';
-  imageFullPreview.style.transform = 'scale(1)';
-  slider.noUiSlider.destroy();
-}
-
-/*
-Функция закрытия по нажатию клавиши.
-
-Если нажат Esc, закрывается окно загрузки и редактирования изображения.
-*/
-function closeByKeydown (evt) {
-  if (evt.keyCode === ESCAPE_CODE) {
-    closeImageUploadForm();
-  }
-}
-
-/*
-Функция запрета закрытия окна загрузки и редактирования изображения при нажатии Esc.
-*/
-function cancelCloseByKeydown () {
-  document.removeEventListener('keydown', closeByKeydown);
-}
-
-/*
-Функция разрешения закрытия окна загрузки и редактирования изображения при нажатии Esc.
-*/
-function restoreCloseByKeydown () {
-  document.addEventListener('keydown', closeByKeydown);
-}
+const submitButton = imageUploadForm.querySelector('.img-upload__submit');
+const bodyElement = document.querySelector('body');
+const successMessageTemplate = document.querySelector('#success').content.querySelector('.success');
+const errorMessageTemplate = document.querySelector('#error').content.querySelector('.error');
 
 /*
 Навешиваем обработчик события выбора изображения (изменения значения поля #upload-file) - отрисовка окна загрузки и редактирования изображения.
@@ -132,7 +31,7 @@ function restoreCloseByKeydown () {
 uploadFileControl.addEventListener('change', renderImageUploadForm);
 
 /*
-Добавляем валидацию поля ввода хештегов.
+Добавляем валидацию (в данном проекте только для поля хештегов).
 
 1. Устанавливаем настройки валидации. Если поля ввода будут невалидны, в элемент с классом upload-image__validate будет добавлен div с классом img-upload__error-text и описанием ошибки, допущенной пользователем.
 2. Добавляем валидатор для библиотеки Pristine. Если поле ввода с id="text__hashtags" не пройдет валидацию по инструкциям функции validateHashtags, в div с классом img-upload__error-text появится описание ошибки (результат работы функции getHashtagsErrorMessage).
@@ -145,6 +44,47 @@ const pristine = new Pristine(imageUploadForm, {
 });
 
 pristine.addValidator(document.querySelector('#text__hashtags'), validateHashtags, getHashtagsErrorMessage);
+
+/* Объявления функций */
+
+/*
+Функция закрытия окна загрузки и редактирования изображения при нажатии клавиши Esc.
+*/
+function closeByKeydown (evt) {
+  if (evt.keyCode === ESCAPE_CODE) {
+    closeImageUploadForm();
+  }
+}
+
+/*
+Функция запрета закрытия окна загрузки и редактирования изображения при нажатии клавиши Esc.
+*/
+function cancelCloseByKeydown () {
+  document.removeEventListener('keydown', closeByKeydown);
+}
+
+/*
+Функция разрешения закрытия окна загрузки и редактирования изображения при нажатии клавиши Esc.
+*/
+function restoreCloseByKeydown () {
+  document.addEventListener('keydown', closeByKeydown);
+}
+
+/*
+Функция блокировки кнопки отправки данных на удалённый сервер.
+*/
+function blockSubmitButton () {
+  submitButton.disabled = true;
+  submitButton.textContent = 'Отправка...';
+}
+
+/*
+Функция разблокировки кнопки отправки данных на удалённый сервер.
+*/
+function unblockSubmitButton () {
+  submitButton.disabled = false;
+  submitButton.textContent = 'Отправить';
+}
 
 /*
 Общая функция валидации поля ввода хештегов.
@@ -182,25 +122,44 @@ function validateHashtags () {
 }
 
 /*
-Функция генерации ошибки валидации. Общая для всех пунктов проверки.
+Функция выдачи сообщения об ошибке валидации. Общая для всех пунктов проверки.
 */
 function getHashtagsErrorMessage () {
-  return 'Хештеги начинаются с решетки. Могут содержать только буквы и числа. Хештегов не более 5. Регистр не важен. Повторять хештеги нельзя.';
+  return `Хештеги начинаются с решётки.
+  Хештеги могут содержать только буквы и числа.
+  Количество хештегов - не более 5.
+  Регистр не важен.
+  Повторять хештеги нельзя.`;
 }
 
 /*
-Функция проверки полей ввода формы добавления изображения перед отправкой данных на сервер. Если содержимое полей ввода не валидно, данные нельзя отправить на сервер.
+Функция установки новых настроек отправки данных на сервер.
+Если содержимое полей ввода не валидно, данные нельзя отправить на сервер.
 Производит черновую обработку содержимого поля ввода хештегов перед отправкой на сервер.
 */
-function validateImageUploadForm (evt) {
-  if (!pristine.validate()) {
-    evt.preventDefault();
+function setImageUploadFormSubmit (evt) {
+  evt.preventDefault();
+  const formData = new FormData(evt.target);
+  const isValid = pristine.validate();
+  if (isValid) {
+    blockSubmitButton();
+    sendData(
+      () => {
+        closeImageUploadForm();
+        unblockSubmitButton();
+        showUploadMessage('success', successMessageTemplate, bodyElement);
+      },
+      () => {
+        showUploadMessage('error', errorMessageTemplate, bodyElement);
+        unblockSubmitButton();
+      },
+      formData
+    );
   }
-  hashtagsInput.value = improveText(hashtagsInput.value);
 }
 
 /*
-Функция черновой обработчки текстового содержимого поля ввода.
+Функция черновой обработки текстового содержимого поля ввода.
 
 Этапы работы:
 1. Приводим к нижнему регистру.
@@ -249,7 +208,7 @@ function isMatchRegExp (arrayItem) {
 Если обнаружен дубликат хештега, проверка не пройдена.
 */
 function hasNoDuplicateItem (array) {
-  return !(array.some(hasDuplicate));
+  return !(hasDuplicate(array));
 }
 
 /*
@@ -262,8 +221,7 @@ function hasNoDuplicateItem (array) {
 - в обратном случае, завершаем проверку с false.
 */
 function hasDuplicate (array) {
-  let workArray = array.slice();
-  workArray = workArray.sort();
+  const workArray = array.slice().sort();
 
   for (let i = 0; i < workArray.length; i++) {
     if (workArray[i] === workArray[i + 1]) {
@@ -275,7 +233,94 @@ function hasDuplicate (array) {
 }
 
 /*
-Функция уменьшения размера.
+Функция отрисовки окна загрузки и редактирования изображения.
+
+Этапы работы:
+1. Добавляем/удаляем классы у элементов:
+- удаляем класс hidden у окна загрузки и редактирования изображения;
+- добавляем тегу <body> класс modal-open.
+2. Навешиваем обработчики событий:
+- событие клика по кнопке-крестику - закрытие окна загрузки и редактирования изображения;
+- событие нажатия кнопки Ecs - закрытие окна загрузки и редактирования изображения;
+- событие отправки данных формы загрузки и редактирования изображения - валидация полей формы;
+- событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
+- событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
+- событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
+- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
+- событие клика по кнопке "-" - уменьшение размера изображения;
+- событие клика по кнопке "+" - увеличение размера изображения;
+- событие смены выбранного эффекта для изображения - обновление эффекта на изображении, обновление настроек слайдера для эффекта.
+3. Добавляем слайдер с начальными настройками в окно загрузки и редактирования изображения.
+*/
+function renderImageUploadForm () {
+  imageUploadFormOverlay.classList.remove('hidden');
+  document.querySelector('body').classList.add('modal-open');
+
+  cancelUploadButton.addEventListener('click', closeImageUploadForm);
+  document.addEventListener('keydown', closeByKeydown);
+  imageUploadForm.addEventListener('submit', setImageUploadFormSubmit);
+  commentInput.addEventListener('focusin', cancelCloseByKeydown);
+  commentInput.addEventListener('focusout', restoreCloseByKeydown);
+  hashtagsInput.addEventListener('focusin', cancelCloseByKeydown);
+  hashtagsInput.addEventListener('focusout', restoreCloseByKeydown);
+  decreaseScaleButton.addEventListener('click', decreaseScale);
+  increaseScaleButton.addEventListener('click', increaseScale);
+  effectsList.addEventListener('change', updateEffect);
+
+  if (!slider.noUiSlider) {
+    createEffectSlider();
+  }
+}
+
+/*
+Функция закрытия окна загрузки и редактирования изображения.
+
+Этапы работы:
+1. Добавляем/удаляем классы у элементов:
+- добавляем класс hidden окну загрузки и редактирования изображения;
+- удаляем у тега <body> класс modal-open.
+2. Удаляем обработчики событий:
+- событие клика по кнопке-крестику - закрытие окна загрузки и редактирования изображения;
+- событие нажатия кнопки Ecs - закрытие окна загрузки и редактирования изображения;
+- событие отправки данных формы загрузки и редактирования изображения - валидация полей формы;
+- событие статуса "в фокусе" поля ввода хештегов - запрет закрытия окна при нажатии Esc;
+- событие статуса "не в фокусе" поля ввода хештегов - разрешение закрытия окна при нажатии Esc;
+- событие статуса "в фокусе" поля ввода комментария - запрет закрытия окна при нажатии Esc;
+- событие статуса "не в фокусе" поля ввода комментария - разрешение закрытия окна при нажатии Esc;
+- событие клика по кнопке "-" - уменьшение размера изображения;
+- событие клика по кнопке "+" - увеличение размера изображения;
+- событие смены выбранного эффекта для изображения - обновление эффекта на изображении, обновление настроек слайдера для эффекта.
+3. Сбрасываем значения полей ввода в форме. Убираем эффекты с изображения.
+*/
+function closeImageUploadForm () {
+  imageUploadFormOverlay.classList.add('hidden');
+  document.querySelector('body').classList.remove('modal-open');
+
+  cancelUploadButton.removeEventListener('click', closeImageUploadForm);
+  document.removeEventListener('keydown', closeByKeydown);
+  imageUploadForm.removeEventListener('submit', setImageUploadFormSubmit);
+  commentInput.removeEventListener('focusin', cancelCloseByKeydown);
+  commentInput.removeEventListener('focusout', restoreCloseByKeydown);
+  hashtagsInput.removeEventListener('focusin', cancelCloseByKeydown);
+  hashtagsInput.removeEventListener('focusout', restoreCloseByKeydown);
+  decreaseScaleButton.removeEventListener('click', decreaseScale);
+  increaseScaleButton.removeEventListener('click', increaseScale);
+  effectsList.removeEventListener('change', updateEffect);
+
+  uploadFileControl.value = '';
+  scaleControlInput.value = '100%';
+  effectLevelInput.value = '';
+  effectNoneInput.checked = true;
+  hashtagsInput.value = '';
+  commentInput.value = '';
+  imageFullPreview.className = '';
+  imageFullPreview.style.filter = 'none';
+  imageFullPreview.style.transform = 'scale(1)';
+  slider.noUiSlider.destroy();
+}
+
+/*
+Функция уменьшения размера изображения.
 
 Этапы работы:
 1. Вычисляем текущее значение размера изображения в поле ввода.
@@ -296,7 +341,7 @@ function decreaseScale () {
 }
 
 /*
-Функция увеличения размера.
+Функция увеличения размера изображения.
 
 Этапы работы:
 1. Вычисляем текущее значение размера изображения в поле ввода.
@@ -341,6 +386,17 @@ function createEffectSlider () {
     start: 100,
     step: 1,
     connect: 'lower',
+    format: {
+      to: function (value) {
+        if (Number.isInteger(value)) {
+          return value.toFixed(0);
+        }
+        return value.toFixed(0);
+      },
+      from: function (value) {
+        return parseFloat(value);
+      },
+    },
   });
 
   slider.noUiSlider.on('update', () => {
@@ -348,22 +404,21 @@ function createEffectSlider () {
     switch (imageFullPreview.className) {
       case 'effects__preview--none':
         imageFullPreview.style.filter = 'none';
-        return true;
+        break;
       case 'effects__preview--chrome':
         imageFullPreview.style.filter = `grayscale(${sliderValueInput.value})`;
-        return true;
+        break;
       case 'effects__preview--sepia':
         imageFullPreview.style.filter = `sepia(${sliderValueInput.value})`;
-        return true;
+        break;
       case 'effects__preview--marvin':
         imageFullPreview.style.filter = `invert(${sliderValueInput.value}%)`;
-        return true;
+        break;
       case 'effects__preview--phobos':
         imageFullPreview.style.filter = `blur(${sliderValueInput.value}px)`;
-        return true;
+        break;
       case 'effects__preview--heat':
         imageFullPreview.style.filter = `brightness(${sliderValueInput.value})`;
-        return true;
     }
   });
 }
@@ -388,10 +443,6 @@ function createEffectSlider () {
 -- удаляем слайдер.
 */
 function updateEffect (evt) {
-  if (!slider.noUiSlider) {
-    createEffectSlider();
-  }
-
   if (evt.target.matches('input[type="radio"]')) {
     imageFullPreview.className = '';
     imageFullPreview.classList.add(`effects__preview--${evt.target.value}`);
@@ -399,7 +450,25 @@ function updateEffect (evt) {
     switch (evt.target.value) {
       case 'none':
         imageFullPreview.style.filter = 'none';
-        slider.noUiSlider.destroy();
+        slider.noUiSlider.updateOptions({
+          range: {
+            min: 0,
+            max: 100,
+          },
+          start: 100,
+          step: 1,
+          format: {
+            to: function (value) {
+              if (Number.isInteger(value)) {
+                return value.toFixed(0);
+              }
+              return value.toFixed(0);
+            },
+            from: function (value) {
+              return parseFloat(value);
+            },
+          },
+        });
         return true;
 
       case 'chrome':
