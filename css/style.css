@@ -1416,3 +1416,8 @@ main {
 .hidden {
   display: none;
 }
+
+.img-upload__error-text {
+  color: #e90000;
+  text-transform: none;
+}
