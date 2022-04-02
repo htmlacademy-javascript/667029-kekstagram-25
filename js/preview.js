@@ -1,5 +1,9 @@
 import {renderFullView} from './full-view.js';
+import {photosFromServer} from './main.js';
+import {getRandomInteger, debounce} from './utilitary.js';
 
+
+const RENDER_DELAY = 500;
 /*
 Функция отрисовывает превью изображений для массива объектов "Описание фотографии". Функция добавляет возможность просмотра полноразмерного изображения для каждого из отрисованных объектов "Описание фотографии".
 
@@ -41,4 +45,71 @@ function renderPreviews (list, template, container) {
   return container;
 }
 
-export {renderPreviews, previewTemplate, picturesContainer, fullPhotoContainer};
+function renderDefaultPreviews () {
+  const defaultList = photosFromServer.slice();
+  //defaultList.sort(comparePreviews);
+  const oldPreviews = document.querySelectorAll('a.picture');
+  oldPreviews.forEach( (element) => element.remove() );
+
+  renderPreviews(defaultList, previewTemplate, picturesContainer);
+}
+
+function renderRandomPreviews () {
+  const rareList = photosFromServer.slice();
+  const randomList = [];
+
+  for (let i = 0; i < 10; i++) {
+    const index = getRandomInteger(0, rareList.length - 1);
+    randomList[i] = rareList[index];
+    rareList.splice(index, 1);
+  }
+
+  const oldPreviews = document.querySelectorAll('a.picture');
+  oldPreviews.forEach( (element) => element.remove() );
+
+  renderPreviews(randomList, previewTemplate, picturesContainer);
+}
+
+function renderDiscussedPreviews () {
+  const discussedList = photosFromServer.slice();
+  discussedList.sort((a, b) => {
+    if (a.comments > b.comments) {
+      return -1;
+    }
+    if (a.comments < b.comments) {
+      return 1;
+    }
+
+    return 0;
+  });
+
+  const oldPreviews = document.querySelectorAll('a.picture');
+  oldPreviews.forEach( (element) => element.remove() );
+
+  renderPreviews(discussedList, previewTemplate, picturesContainer);
+}
+
+const previewFilterElement = document.querySelector('.img-filters');
+const defaultPreviewFilter = document.querySelector('#filter-default');
+const randomPreviewFilter = document.querySelector('#filter-random');
+const discussedPreviewFilter = document.querySelector('#filter-discussed');
+
+function renderFilters() {
+  previewFilterElement.classList.remove('img-filters--inactive');
+
+  defaultPreviewFilter.addEventListener('click', debounce(
+    renderDefaultPreviews,
+    RENDER_DELAY,
+  ));
+  randomPreviewFilter.addEventListener('click', debounce(
+    renderRandomPreviews,
+    RENDER_DELAY,
+  ));
+  discussedPreviewFilter.addEventListener('click', debounce(
+    renderDiscussedPreviews,
+    RENDER_DELAY,
+  ));
+}
+
+export {renderPreviews, renderFilters, previewTemplate, picturesContainer, fullPhotoContainer};
+
