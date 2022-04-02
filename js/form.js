@@ -54,7 +54,7 @@ function renderUploadedFile () {
 1. Устанавливаем настройки валидации. Если поля ввода будут невалидны, в элемент с классом upload-image__validate будет добавлен div с классом img-upload__error-text и описанием ошибки, допущенной пользователем.
 2. Добавляем валидатор для библиотеки Pristine. Если поле ввода с id="text__hashtags" не пройдет валидацию по инструкциям функции validateHashtags, в div с классом img-upload__error-text появится описание ошибки (результат работы функции getHashtagsErrorMessage).
 */
-const pristine = new Pristine(imageUploadForm, {
+const pristine = window.Pristine(imageUploadForm, {
   classTo: 'upload-image__validate',
   errorTextParent: 'upload-image__validate',
   errorTextTag: 'div',
