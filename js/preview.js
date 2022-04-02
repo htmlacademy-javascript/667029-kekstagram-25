@@ -45,16 +45,25 @@ function renderPreviews (list, template, container) {
   return container;
 }
 
-function renderDefaultPreviews () {
+const previewFilterElement = document.querySelector('.img-filters');
+const previewFilterButtons = document.querySelectorAll('.img-filters__button');
+const defaultPreviewFilter = document.querySelector('#filter-default');
+const randomPreviewFilter = document.querySelector('#filter-random');
+const discussedPreviewFilter = document.querySelector('#filter-discussed');
+
+function renderDefaultPreviews (evt) {
   const defaultList = photosFromServer.slice();
-  //defaultList.sort(comparePreviews);
   const oldPreviews = document.querySelectorAll('a.picture');
-  oldPreviews.forEach( (element) => element.remove() );
+
+  oldPreviews.forEach((element) => element.remove());
+
+  previewFilterButtons.forEach((element) => element.classList.remove('img-filters__button--active'));
+  evt.target.classList.add('img-filters__button--active');
 
   renderPreviews(defaultList, previewTemplate, picturesContainer);
 }
 
-function renderRandomPreviews () {
+function renderRandomPreviews (evt) {
   const rareList = photosFromServer.slice();
   const randomList = [];
 
@@ -65,12 +74,15 @@ function renderRandomPreviews () {
   }
 
   const oldPreviews = document.querySelectorAll('a.picture');
-  oldPreviews.forEach( (element) => element.remove() );
+  oldPreviews.forEach((element) => element.remove());
+
+  previewFilterButtons.forEach((element) => element.classList.remove('img-filters__button--active'));
+  evt.target.classList.add('img-filters__button--active');
 
   renderPreviews(randomList, previewTemplate, picturesContainer);
 }
 
-function renderDiscussedPreviews () {
+function renderDiscussedPreviews (evt) {
   const discussedList = photosFromServer.slice();
   discussedList.sort((a, b) => {
     if (a.comments > b.comments) {
@@ -86,13 +98,11 @@ function renderDiscussedPreviews () {
   const oldPreviews = document.querySelectorAll('a.picture');
   oldPreviews.forEach( (element) => element.remove() );
 
+  previewFilterButtons.forEach((element) => element.classList.remove('img-filters__button--active'));
+  evt.target.classList.add('img-filters__button--active');
+
   renderPreviews(discussedList, previewTemplate, picturesContainer);
 }
-
-const previewFilterElement = document.querySelector('.img-filters');
-const defaultPreviewFilter = document.querySelector('#filter-default');
-const randomPreviewFilter = document.querySelector('#filter-random');
-const discussedPreviewFilter = document.querySelector('#filter-discussed');
 
 function renderFilters() {
   previewFilterElement.classList.remove('img-filters--inactive');
@@ -112,4 +122,3 @@ function renderFilters() {
 }
 
 export {renderPreviews, renderFilters, previewTemplate, picturesContainer, fullPhotoContainer};
-

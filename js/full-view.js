@@ -25,6 +25,13 @@ function renderCommentList (list, container) {
   container.innerHTML = '';
 
   const commentsList = list.slice();
+
+  if (commentsList.length <= COMMENT_COUNT) {
+    moreCommentsButton.classList.add('hidden');
+  } else {
+    moreCommentsButton.classList.remove('hidden');
+  }
+
   const commentsPack = commentsList.splice(0, COMMENT_COUNT);
   let commentsCount = commentsPack.length;
 
@@ -38,6 +45,11 @@ function renderCommentList (list, container) {
     container.appendChild(addToFragment(addCommentsPack));
     commentsCount += addCommentsCount;
     commentsCountElement.innerHTML = `${commentsCount} из <span class="comments-count">${list.length}</span> комментариев`;
+    if (commentsCount === list.length) {
+      moreCommentsButton.classList.add('hidden');
+    } else {
+      moreCommentsButton.classList.remove('hidden');
+    }
   });
 }
 

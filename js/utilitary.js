@@ -2,31 +2,22 @@ import {isPositive, isBigger} from './check.js';
 
 const ESCAPE_CODE = 27;
 const MESSAGE_SHOW_TIME = 5000;
-const ERROR_BACKGROUND_COLOR = '#fc4c4c';
 
 /*
 Функция показывает сообщение об ошибке загрузки данных с удаленного сервера.
 Текст сообщения передается параметром.
 
 Этапы работы:
-1. Создаём элемент для сообщения об ошибке, задаём ему стили (ТЗ на стили нет).
-2. Заполняем содержимое элемента текстом сообщения.
-3. Добавляем элемент на страницу.
-4. Устанавливаем таймер, засекаем указанное время. Когда время выйдет, элемент будет удалён.
+1. Создаём элемент для сообщения об ошибке.
+2. Задаём ему стили (ТЗ на стили нет).
+3. Заполняем содержимое элемента текстом сообщения.
+4. Добавляем элемент на страницу.
+5. Устанавливаем таймер, засекаем указанное время. Когда время выйдет, элемент будет удалён.
 */
 function showDownloadMessage (message) {
   const errorElement = document.createElement('div');
-  errorElement.style.zIndex = 50;
-  errorElement.style.position = 'absolute';
-  errorElement.style.left = 0;
-  errorElement.style.top = 0;
-  errorElement.style.right = 0;
-  errorElement.style.padding = '10px';
-  errorElement.style.fontSize = '21px';
-  errorElement.style.textAlign = 'center';
-  errorElement.style.textTransform = 'none';
-  errorElement.style.backgroundColor = ERROR_BACKGROUND_COLOR;
 
+  errorElement.classList.add('download-error-text');
   errorElement.textContent = message;
 
   document.body.append(errorElement);
@@ -61,9 +52,7 @@ function showUploadMessage (category, template, container) {
   container.appendChild(uploadFragment);
 
   document.addEventListener('keydown', closeMessageByKeydown);
-  document.addEventListener('click', (evt) => {
-    closeMessageByClick (evt, category);
-  });
+  document.addEventListener('click', closeMessageByClick);
   closeMessageButton.addEventListener('click', closeUploadMessage);
 }
 
@@ -71,18 +60,18 @@ function showUploadMessage (category, template, container) {
 Функция закрытия сообщения об отправке данных на сервер при клике по любому месту в окне вне сообщения.
 */
 
-function closeMessageByClick (evt, messageCategory) {
-  if (evt.target.matches(`.${messageCategory}`)) {
-    closeUploadMessage(messageCategory);
+function closeMessageByClick (evt) {
+  if (evt.target.matches('.success') || evt.target.matches('.error')) {
+    closeUploadMessage();
   }
 }
 
 /*
 Функция закрытия сообщения об отправке данных на сервер при нажатии клавиши Esc.
 */
-function closeMessageByKeydown (evt, messageCategory) {
+function closeMessageByKeydown (evt) {
   if (evt.keyCode === ESCAPE_CODE) {
-    closeUploadMessage(messageCategory);
+    closeUploadMessage();
   }
 }
 
@@ -94,11 +83,9 @@ function closeMessageByKeydown (evt, messageCategory) {
 2. Удаляем обработчик событий для закрытия сообщения (условие срабатывания - клик по любому месту в окне вне сообщения).
 3. Удаляем на странице элемент-сообщение (при создании он добавлялся последним в body).
 */
-function closeUploadMessage (category) {
+function closeUploadMessage () {
   document.removeEventListener('keydown', closeMessageByKeydown);
-  document.removeEventListener('click', (evt) => {
-    closeMessageByClick (evt, category);
-  });
+  document.removeEventListener('click', closeMessageByClick);
   document.body.lastChild.remove();
 }
 
@@ -121,7 +108,7 @@ function debounce (callback, timeoutDelay = 500) {
 
   return (...rest) => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => callback.apply(this, rest), timeoutDelay);
+    timeoutId = setTimeout(callback, timeoutDelay, ...rest);
   };
 }
 

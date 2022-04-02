@@ -4,6 +4,7 @@ import {sendData} from './api.js';
 const SCALE_STEP = 25;
 const MIN_SCALE = 25;
 const MAX_SCALE = 100;
+const FILE_TYPES = ['jpg', 'jpeg', 'png'];
 
 const imageUploadForm = document.querySelector('.img-upload__form');
 const imageUploadFormOverlay = imageUploadForm.querySelector('.img-upload__overlay');
@@ -17,9 +18,11 @@ const effectLevelInput = imageUploadForm.querySelector('.effect-level__value');
 const effectNoneInput = imageUploadForm.querySelector('#effect-none');
 const hashtagsInput = imageUploadForm.querySelector('.text__hashtags');
 const commentInput = imageUploadForm.querySelector('.text__description');
+const sliderContainer = imageUploadForm.querySelector('.img-upload__effect-level');
 const slider = imageUploadForm.querySelector('.effect-level__slider');
 const sliderValueInput = imageUploadForm.querySelector('.effect-level__value');
 const effectsList = imageUploadForm.querySelector('.img-upload__effects');
+const effectPreviews = imageUploadForm.querySelectorAll('.effects__preview');
 const submitButton = imageUploadForm.querySelector('.img-upload__submit');
 const bodyElement = document.querySelector('body');
 const successMessageTemplate = document.querySelector('#success').content.querySelector('.success');
@@ -29,6 +32,21 @@ const errorMessageTemplate = document.querySelector('#error').content.querySelec
 Навешиваем обработчик события выбора изображения (изменения значения поля #upload-file) - отрисовка окна загрузки и редактирования изображения.
 */
 uploadFileControl.addEventListener('change', renderImageUploadForm);
+uploadFileControl.addEventListener('change', renderUploadedFile);
+
+function renderUploadedFile () {
+  const uploadedFile = uploadFileControl.files[0];
+  const uploadedFileName = uploadedFile.name.toLowerCase();
+
+  const isFiletypeMatches = FILE_TYPES.some((value) => uploadedFileName.endsWith(value));
+
+  if (isFiletypeMatches) {
+    imageFullPreview.src = URL.createObjectURL(uploadedFile);
+    effectPreviews.forEach((element) => {
+      element.style.backgroundImage = `url(${imageFullPreview.src})`;
+    });
+  }
+}
 
 /*
 Добавляем валидацию (в данном проекте только для поля хештегов).
@@ -150,8 +168,10 @@ function setImageUploadFormSubmit (evt) {
         showUploadMessage('success', successMessageTemplate, bodyElement);
       },
       () => {
-        showUploadMessage('error', errorMessageTemplate, bodyElement);
+        closeImageUploadForm();
         unblockSubmitButton();
+        showUploadMessage('error', errorMessageTemplate, bodyElement);
+
       },
       formData
     );
@@ -399,26 +419,34 @@ function createEffectSlider () {
     },
   });
 
+  sliderContainer.classList.add('hidden');
+
   slider.noUiSlider.on('update', () => {
     sliderValueInput.value = slider.noUiSlider.get();
     switch (imageFullPreview.className) {
       case 'effects__preview--none':
         imageFullPreview.style.filter = 'none';
+        sliderContainer.classList.add('hidden');
         break;
       case 'effects__preview--chrome':
         imageFullPreview.style.filter = `grayscale(${sliderValueInput.value})`;
+        sliderContainer.classList.remove('hidden');
         break;
       case 'effects__preview--sepia':
         imageFullPreview.style.filter = `sepia(${sliderValueInput.value})`;
+        sliderContainer.classList.remove('hidden');
         break;
       case 'effects__preview--marvin':
         imageFullPreview.style.filter = `invert(${sliderValueInput.value}%)`;
+        sliderContainer.classList.remove('hidden');
         break;
       case 'effects__preview--phobos':
         imageFullPreview.style.filter = `blur(${sliderValueInput.value}px)`;
+        sliderContainer.classList.remove('hidden');
         break;
       case 'effects__preview--heat':
         imageFullPreview.style.filter = `brightness(${sliderValueInput.value})`;
+        sliderContainer.classList.remove('hidden');
     }
   });
 }
