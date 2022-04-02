@@ -1,3 +1,5 @@
+/* global Pristine */
+
 import {showUploadMessage, ESCAPE_CODE} from './utilitary.js';
 import {sendData} from './api.js';
 
