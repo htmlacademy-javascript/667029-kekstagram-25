@@ -22,6 +22,7 @@ const sliderContainer = imageUploadForm.querySelector('.img-upload__effect-level
 const slider = imageUploadForm.querySelector('.effect-level__slider');
 const sliderValueInput = imageUploadForm.querySelector('.effect-level__value');
 const effectsList = imageUploadForm.querySelector('.img-upload__effects');
+const effectPreviews = imageUploadForm.querySelectorAll('.effects__preview');
 const submitButton = imageUploadForm.querySelector('.img-upload__submit');
 const bodyElement = document.querySelector('body');
 const successMessageTemplate = document.querySelector('#success').content.querySelector('.success');
@@ -41,6 +42,9 @@ function renderUploadedFile () {
 
   if (isFiletypeMatches) {
     imageFullPreview.src = URL.createObjectURL(uploadedFile);
+    effectPreviews.forEach((element) => {
+      element.style.backgroundImage = `url(${imageFullPreview.src})`;
+    });
   }
 }
 
